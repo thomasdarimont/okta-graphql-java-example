@@ -1,25 +1,32 @@
 package com.oktadeveloper.graphqldemo;
 
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
 @AutoConfigureMockMvc
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class GraphqldemoApplicationTests {
 
     @Autowired
     MockMvc mockMvc;
 
     @Test
+    @Order(0)
     void listFoods() throws Exception {
+
         String expectedResponse = "{\"data\":{\"foods\":[" +
                 "{\"id\":1,\"name\":\"Pizza\",\"isGood\":true}," +
                 "{\"id\":2,\"name\":\"Spam\",\"isGood\":false}," +
@@ -27,7 +34,8 @@ class GraphqldemoApplicationTests {
                 "{\"id\":4,\"name\":\"Avocado\",\"isGood\":false}" +
                 "]}}";
 
-        mockMvc.perform(MockMvcRequestBuilders.post("/graphql")
+        mockMvc.perform(post("/graphql")
+                .with(jwt())
                 .content("{\"query\":\"{ foods { id name isGood } }\"}")
                 .contentType(MediaType.APPLICATION_JSON)
                 .accept(MediaType.APPLICATION_JSON))
@@ -37,6 +45,7 @@ class GraphqldemoApplicationTests {
     }
 
     @Test
+    @Order(1)
     void addAndRemoveFood() throws Exception {
         String expectedResponseBefore = "{\"data\":{\"foods\":[" +
                 "{\"id\":1,\"name\":\"Pizza\"}," +
@@ -52,8 +61,9 @@ class GraphqldemoApplicationTests {
                 "{\"id\":5,\"name\":\"Pasta\"}" +
                 "]}}";
 
-        // List cars, expect 'New Car' to not be there
-        mockMvc.perform(MockMvcRequestBuilders.post("/graphql")
+        // List foods, expect 'New Food' to not be there
+        mockMvc.perform(post("/graphql")
+                .with(jwt())
                 .content("{\"query\":\"{ foods { id name } }\"}")
                 .contentType(MediaType.APPLICATION_JSON)
                 .accept(MediaType.APPLICATION_JSON))
@@ -61,8 +71,9 @@ class GraphqldemoApplicationTests {
                 .andExpect(content().json(expectedResponseBefore))
                 .andReturn();
 
-        // Add 'New Car'
-        mockMvc.perform(MockMvcRequestBuilders.post("/graphql")
+        // Add 'New Food'
+        mockMvc.perform(post("/graphql")
+                .with(jwt())
                 .content("{\"query\":\"mutation { saveFood(food: { name: \\\"Pasta\\\" }) { id name } }\"}")
                 .contentType(MediaType.APPLICATION_JSON)
                 .accept(MediaType.APPLICATION_JSON))
@@ -70,8 +81,9 @@ class GraphqldemoApplicationTests {
                 .andExpect(content().json("{\"data\":{\"saveFood\":{\"id\":5,\"name\":\"Pasta\"}}}"))
                 .andReturn();
 
-        // List cars, expect 'New Car' to be there
-        mockMvc.perform(MockMvcRequestBuilders.post("/graphql")
+        // List foods, expect 'New Food' to be there
+        mockMvc.perform(post("/graphql")
+                .with(jwt())
                 .content("{\"query\":\"{ foods { id name } }\"}")
                 .contentType(MediaType.APPLICATION_JSON)
                 .accept(MediaType.APPLICATION_JSON))
@@ -79,16 +91,18 @@ class GraphqldemoApplicationTests {
                 .andExpect(content().json(expectedResponseAfter))
                 .andReturn();
 
-        // Remove 'New Car'
-        mockMvc.perform(MockMvcRequestBuilders.post("/graphql")
+        // Remove 'New Food'
+        mockMvc.perform(post("/graphql")
+                .with(jwt())
                 .content("{\"query\":\"mutation { deleteFood(id: 5) }\"}")
                 .contentType(MediaType.APPLICATION_JSON)
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andReturn();
 
-        // List cars, expect 'New Car' to not be there
-        mockMvc.perform(MockMvcRequestBuilders.post("/graphql")
+        // List foods, expect 'New Food' to not be there
+        mockMvc.perform(post("/graphql")
+                .with(jwt())
                 .content("{\"query\":\"{ foods { id name } }\"}")
                 .contentType(MediaType.APPLICATION_JSON)
                 .accept(MediaType.APPLICATION_JSON))
