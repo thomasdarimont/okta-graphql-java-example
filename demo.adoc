@@ -1,0 +1,172 @@
+:experimental:
+// Define unicode for Apple Command key.
+:commandkey: &#8984;
+:toc: macro
+
+== Java + GraphQL Demo Steps
+
+In this demo, I'll show how to build a GraphQL API with Java and Spring Boot. I'll also show how to test your GraphQL API using JUnit 5.
+
+**Prerequisites:**
+
+* https://adoptopenjdk.net/[Java 11]+
+* https://httpie.org/doc#installation[HTTPie]
+* An https://developer.okta.com/signup/[Okta Developer Account] (we will create this)
+
+TIP: The brackets at the end of some steps indicate the IntelliJ Live Templates to use. You can find the template definitions at https://github.com/mraible/idea-live-templates[mraible/idea-live-templates].
+
+toc::[]
+
+=== Create a GraphQL API with Java and Spring Boot
+
+// todo: update the blog post to use latest Spring Boot
+. Create a new project on https://start.spring.io[start.spring.io] with web, Spring Data, and H2 or https://start.spring.io/#!type=maven-project&language=java&platformVersion=2.2.2.RELEASE&packaging=jar&jvmVersion=1.8&groupId=com.oktadeveloper&artifactId=graphqldemo&name=graphqldemo&description=Demo%20project%20for%20Spring%20Boot&packageName=com.oktadeveloper.graphqldemo&dependencies=web,data-jpa,h2[use this link].
+
+. Expand the downloaded package and add GraphQL SPQR (GraphQL Schema Publisher & Query Resolver, pronounced like _speaker_) as a dependency.
++
+[source,xml]
+----
+<dependency>
+    <groupId>io.leangen.graphql</groupId>
+    <artifactId>graphql-spqr-spring-boot-starter</artifactId>
+    <version>0.0.4</version>
+</dependency>
+----
+
+. Create a `Food` entity class. [`graphql-food`]
+
+. Create a `FoodRepository` class to persist your entity. [`boot-repo`]
++
+[source,java]
+----
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+@Repository
+interface FoodRepository extends JpaRepository<Food, Long> {
+}
+----
+
+. Create a `FoodService` to read, save, and delete your entity. [`graphql-service`]
+
+. Notice that you're able to define calculated properties to entities. In `FoodService`, you declared the method `isGood()` as a property that can be queried for each food.
+
+. Create a bean to initialize the app with sample data. [`graphql-init`]
+
+. Enable the web UI to test the GraphQL API by adding the following to `application.properties`.
++
+[source,properties]
+----
+graphql.spqr.gui.enabled=true
+----
+
+=== Run Your Java GraphQL API
+
+. Run your project with `./mvnw spring-boot:run`
+
+. Open your browser to `http://localhost:8080/gui` and run a sample query.
++
+[source,gql]
+----
+{
+  foods {
+    id
+    name
+    isGood
+  }
+}
+----
+
+. You can also a specific food by ID using a query like the following:
++
+[source,gql]
+----
+{ food(id: 1) { name } }
+----
+
+. Notice that you are able to manipulate the response. On that last query, you asked only for the name of the food and the API didn't return the `id` nor the `isGood` property.
+
+. Create a new food by running the `saveFood()` mutation:
++
+[source,gql]
+----
+mutation {
+  saveFood(food: { name: "Pasta" }) {
+    id
+    isGood
+  }
+}
+----
+
+. Query all the foods again, and you should see the newly added "Pasta" there.
+
+=== Test Your Java GraphQL API with JUnit 5
+
+. Update `GraphqldemoApplicationTests` to call your API via HTTP and wrap the query in a JSON object with a single property called `query`. [`graphql-listFoods`]
+
+. Run `./mvnw test` to make sure everything works.
+
+=== Secure Your Java GraphQL API
+
+. Run the Okta Maven Plugin to create an Okta account and configure your Spring Boot app to work with it.
+
+  ./mvnw com.okta:okta-maven-plugin:setup
+
+. To authenticate and see your access token (required to use the API), create a `MyAccessTokenController` that displays the access token. [`graphql-token`]
+
+. Start your app again and go to `http://localhost:8080/my-access-token`.
+
+. If you want to use the http://localhost:8080/gui[web UI], click on **HTTP HEADERS** at the bottom left and add the following.
++
+[source,json]
+----
+{ "Authorization": "Bearer <your_access_token>" }
+----
+
+. Click the **Copy CURL** button in the top right of the web UI to see how to call your GraphQL API with cURL.
+
+. You can also use https://httpie.org/[HTTPie]:
+
+  http POST http://localhost:8080/graphql query='{foods{id,name}}' 'Authorization: <your_access_token>'
+
+. Congrats! You now have a fully secured GraphQL API. 🎉
+
+==== Make Your JUnit Tests Security-Aware
+
+. Run `./mvnw test` to see that tests fail with `403 Forbidden`.
+
+. This happens because your tests are not security-aware. To fix that, you need to add the method call `.with(SecurityMockMvcRequestPostProcessors.jwt())` to each of your `mockMvc.perform()` chains.
++
+[source,java]
+----
+mockMvc.perform(MockMvcRequestBuilders.post("/graphql")
+        .with(SecurityMockMvcRequestPostProcessors.jwt()) // <- ADD THIS LINE
+        .content("{\"query\":\"{ foods { id name isGood } }\"}")
+        .contentType(MediaType.APPLICATION_JSON)
+        .accept(MediaType.APPLICATION_JSON))
+        .andExpect(status().isOk())
+        .andExpect(content().json(expectedResponse))
+        .andReturn();
+----
+
+. Convert to static imports and your code will be more concise.
++
+[source,java]
+----
+mockMvc.perform(post("/graphql")
+        .with(jwt())
+        ...
+----
++
+The `jwt()` method instructs the test to inject a JWT authentication and act accordingly as if a user is authenticated.
+
+. Add a test to make sure add and remove are working. [`graphql-tests`]
+
+. Run the test in IntelliJ and show how it passes.
+
+== Java + GraphQL Rocks!
+
+🤘 Find the code on GitHub: https://github.com/oktadeveloper/okta-graphql-java-example[@oktadeveloper/okta-graphql-java-example].
+
+👀 Read the blog post: https://developer.okta.com/blog/2020/01/31/java-graphql[How to GraphQL in Java].
+
