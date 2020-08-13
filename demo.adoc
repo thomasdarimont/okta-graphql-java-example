@@ -7,6 +7,8 @@
 
 In this demo, I'll show how to build a GraphQL API with Java and Spring Boot. I'll also show how to test your GraphQL API using JUnit 5.
 
+This demo is an abbreviated version of [How to GraphQL in Java](https://developer.okta.com/blog/2020/01/31/java-graphql), designed for live coding.
+
 **Prerequisites:**
 
 * https://adoptopenjdk.net/[Java 11]+
@@ -20,7 +22,7 @@ toc::[]
 === Create a GraphQL API with Java and Spring Boot
 
 // todo: update the blog post to use latest Spring Boot
-. Create a new project on https://start.spring.io[start.spring.io] with web, Spring Data, and H2 or https://start.spring.io/#!type=maven-project&language=java&platformVersion=2.2.2.RELEASE&packaging=jar&jvmVersion=1.8&groupId=com.oktadeveloper&artifactId=graphqldemo&name=graphqldemo&description=Demo%20project%20for%20Spring%20Boot&packageName=com.oktadeveloper.graphqldemo&dependencies=web,data-jpa,h2[use this link].
+. Create a new project on https://start.spring.io[start.spring.io] with web, Spring Data, and H2 or https://start.spring.io/#!type=maven-project&language=java&platformVersion=2.3.2.RELEASE&packaging=jar&jvmVersion=11&groupId=com.oktadeveloper&artifactId=graphqldemo&name=graphqldemo&description=Demo%20project%20for%20Spring%20Boot&packageName=com.oktadeveloper.graphqldemo&dependencies=web,data-jpa,h2[use this link].
 
 . Expand the downloaded package and add GraphQL SPQR (GraphQL Schema Publisher & Query Resolver, pronounced like _speaker_) as a dependency.
 +
