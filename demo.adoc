@@ -22,7 +22,7 @@ toc::[]
 === Create a GraphQL API with Java and Spring Boot
 
 // todo: update the blog post to use latest Spring Boot
-. Create a new project on https://start.spring.io[start.spring.io] with web, Spring Data, and H2 or https://start.spring.io/#!type=maven-project&language=java&platformVersion=2.3.2.RELEASE&packaging=jar&jvmVersion=11&groupId=com.oktadeveloper&artifactId=graphqldemo&name=graphqldemo&description=Demo%20project%20for%20Spring%20Boot&packageName=com.oktadeveloper.graphqldemo&dependencies=web,data-jpa,h2[use this link].
+. Create a new project on https://start.spring.io[start.spring.io] with web, Spring Data, Spring Data REST, and H2 or https://start.spring.io/#!type=maven-project&language=java&platformVersion=2.3.2.RELEASE&packaging=jar&jvmVersion=11&groupId=com.oktadeveloper&artifactId=graphqldemo&name=graphqldemo&description=Demo%20project%20for%20Spring%20Boot&packageName=com.oktadeveloper.graphqldemo&dependencies=web,data-jpa,h2,data-rest[use this link].
 
 . Expand the downloaded package and add GraphQL SPQR (GraphQL Schema Publisher & Query Resolver, pronounced like _speaker_) as a dependency.
 +
@@ -112,11 +112,12 @@ mutation {
 
 . Run the Okta Maven Plugin to create an Okta account and configure your Spring Boot app to work with it.
 
-  ./mvnw com.okta:okta-maven-plugin:setup
+  ./mvnw com.okta:okta-maven-plugin:register
+  ./mvnw com.okta:okta-maven-plugin:spring-boot
 
 . To authenticate and see your access token (required to use the API), create a `MyAccessTokenController` that displays the access token. [`graphql-token`]
 
-. Start your app again and go to `http://localhost:8080/my-access-token`.
+. Restart your app and go to `http://localhost:8080/my-access-token`.
 
 . If you want to use the http://localhost:8080/gui[web UI], click on **HTTP HEADERS** at the bottom left and add the following.
 +
@@ -129,7 +130,7 @@ mutation {
 
 . You can also use https://httpie.org/[HTTPie]:
 
-  http POST http://localhost:8080/graphql query='{foods{id,name}}' 'Authorization: <your_access_token>'
+  http POST http://localhost:8080/graphql query='{foods{id,name}}' 'Authorization: Bearer <your_access_token>'
 
 . Congrats! You now have a fully secured GraphQL API. 🎉
 
@@ -137,7 +138,18 @@ mutation {
 
 . Run `./mvnw test` to see that tests fail with `403 Forbidden`.
 
-. This happens because your tests are not security-aware. To fix that, you need to add the method call `.with(SecurityMockMvcRequestPostProcessors.jwt())` to each of your `mockMvc.perform()` chains.
+. This happens because your tests are not security-aware. To fix that, you need to add `spring-security-test` as a dependency to your `pom.xml`.
++
+[source,xml]
+----
+<dependency>
+    <groupId>org.springframework.security</groupId>
+    <artifactId>spring-security-test</artifactId>
+    <scope>test</scope>
+</dependency>
+----
+
+. Then, update `mockMvc.perform()` to add `.with(SecurityMockMvcRequestPostProcessors.jwt())`:
 +
 [source,java]
 ----
