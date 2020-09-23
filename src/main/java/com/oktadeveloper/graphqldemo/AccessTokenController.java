@@ -1,6 +1,5 @@
 package com.oktadeveloper.graphqldemo;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
@@ -10,18 +9,23 @@ import org.springframework.web.bind.annotation.RestController;
 import java.security.Principal;
 
 @RestController
-class MyAccessTokenController {
+class AccessTokenController {
 
-    @Autowired
-    private OAuth2AuthorizedClientService clientService;
+    private final OAuth2AuthorizedClientService clientService;
 
-    @RequestMapping("/my-access-token")
-    String home(Principal user) {
+    public AccessTokenController(OAuth2AuthorizedClientService clientService) {
+        this.clientService = clientService;
+    }
+
+    @RequestMapping("/")
+    String getTokenValue(Principal user) {
+
         OAuth2AuthenticationToken token = (OAuth2AuthenticationToken) user;
         String authorizedClientRegistrationId = token.getAuthorizedClientRegistrationId();
         String name = user.getName();
         OAuth2AuthorizedClient client = clientService.loadAuthorizedClient(authorizedClientRegistrationId, name);
-        return "token: " + client.getAccessToken().getTokenValue();
+
+        return client.getAccessToken().getTokenValue();
     }
 
 }
